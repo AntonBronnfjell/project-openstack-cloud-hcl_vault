@@ -1,0 +1,44 @@
+# ============================================================================
+# Vault Service Leaf Module - Example Configuration
+# ============================================================================
+
+domain  = "graphicsforge.net"
+subdomain = "chisel"
+
+# Instance configuration
+instance_count  = 2  # Minimum 2 for zero-downtime
+instance_flavor = "m1.small"
+instance_image  = "ubuntu-22.04"
+
+# Network configuration
+network_name         = "private"
+security_group_name  = "vault-sg"
+ssh_key_name         = "your-ssh-key-name"
+
+# Vault configuration
+vault_port      = 8200
+vault_data_path = "/opt/vault/data"
+vault_config_path = "/opt/vault/config"
+vault_version   = "latest"
+
+# Vault addresses (full URLs)
+vault_addr    = "https://chisel.graphicsforge.net"
+vault_api_addr = "https://chisel.graphicsforge.net"
+
+# TLS configuration
+enable_tls    = true
+tls_cert_path = ""  # Path to TLS certificate file (optional, can use self-signed)
+tls_key_path  = ""  # Path to TLS private key file (optional, can use self-signed)
+
+# SSH configuration
+deploy_user          = "ubuntu"
+ssh_private_key_path = ""  # Path to SSH private key for instance access
+
+# ============================================================================
+# Azure AD OIDC Configuration
+# ============================================================================
+enable_azure_ad_oidc = true
+azure_ad_tenant_id   = "your-tenant-id-here"
+azure_ad_client_id   = "your-client-id-here"
+azure_ad_client_secret = ""  # Store securely, use env vars
+vault_oidc_default_role = "azure-ad"

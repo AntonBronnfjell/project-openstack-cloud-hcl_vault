@@ -1,0 +1,41 @@
+version: '3.8'
+
+volumes:
+  vault-data:
+
+services:
+  vault:
+    image: hashicorp/vault:${VAULT_VERSION:-latest}
+    container_name: vault
+    env_file: stack.env
+    restart: always
+    environment:
+      VAULT_LOCAL_CONFIG: |
+        {
+          "listener": [
+            {
+              "tcp": {
+                "address": "0.0.0.0:8200",
+                "tls_disable": 0,
+                "tls_cert_file": "/vault/config/certs/vault-cert.pem",
+                "tls_key_file": "/vault/config/certs/vault-key.pem"
+              }
+            }
+          ],
+          "storage": {
+            "file": {
+              "path": "/vault/data"
+            }
+          },
+          "default_lease_ttl": "168h",
+          "max_lease_ttl": "720h",
+          "ui": true
+        }
+    ports:
+      - "${PORT:-8200}:8200"
+    volumes:
+      - vault-data:/vault/file:rw
+      - /opt/vault:/vault/config:rw
+    cap_add:
+      - IPC_LOCK
+    entrypoint: vault server -config=/vault/config/vault.json
