@@ -28,7 +28,7 @@ resource "null_resource" "vault_docker_deploy" {
   triggers = {
     instance_id     = openstack_compute_instance_v2.vault[count.index].id
     docker_compose  = filemd5("${path.module}/docker/docker-compose.yml")
-    stack_env       = filemd5("${path.module}/docker/stack.env")
+    stack_env       = fileexists("${path.module}/docker/stack.env") ? filemd5("${path.module}/docker/stack.env") : "default"
     instance_ip     = openstack_compute_instance_v2.vault[count.index].network[0].fixed_ip_v4
   }
 
@@ -52,9 +52,14 @@ resource "null_resource" "vault_docker_deploy" {
     destination = "/tmp/docker-compose.yml"
   }
 
-  # Copy environment file
+  # Copy environment file (create from template if not exists)
   provisioner "file" {
-    source      = "${path.module}/docker/stack.env"
+    content = <<-ENV
+PORT=${var.vault_port}
+VAULT_ADDR=${var.vault_addr}
+VAULT_API_ADDR=${var.vault_api_addr}
+VAULT_VERSION=${var.vault_version}
+ENV
     destination = "/tmp/stack.env"
   }
 
