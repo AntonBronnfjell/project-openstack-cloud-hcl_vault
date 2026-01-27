@@ -33,10 +33,11 @@ resource "null_resource" "vault_docker_deploy" {
   }
 
   # Wait for instance to be ready
-  depends_on = [
-    openstack_compute_instance_v2.vault,
-    null_resource.vault_wait_for_ssh
-  ]
+  # Only wait for SSH if SSH key is configured, otherwise just wait for instance creation
+  depends_on = concat(
+    [openstack_compute_instance_v2.vault],
+    var.ssh_private_key_path != "" ? [null_resource.vault_wait_for_ssh[count.index]] : []
+  )
 
   connection {
     type        = "ssh"
@@ -148,9 +149,9 @@ VAULT_CONFIG
   }
 }
 
-# Wait for SSH to be available on instances
+# Wait for SSH to be available on instances (only if SSH key is configured)
 resource "null_resource" "vault_wait_for_ssh" {
-  count = var.instance_count
+  count = var.instance_count * (var.ssh_private_key_path != "" ? 1 : 0)
 
   triggers = {
     instance_id = openstack_compute_instance_v2.vault[count.index].id
