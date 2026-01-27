@@ -33,12 +33,9 @@ resource "null_resource" "vault_docker_deploy" {
   }
 
   # Wait for instance to be ready
-  # If SSH key is configured, also wait for SSH to be available
-  # Otherwise, proceed with deployment (may require manual SSH setup)
-  depends_on = var.ssh_private_key_path != "" && length(null_resource.vault_wait_for_ssh) > 0 ? [
-    openstack_compute_instance_v2.vault,
-    null_resource.vault_wait_for_ssh[count.index]
-  ] : [
+  # Note: SSH wait is handled separately via null_resource.vault_wait_for_ssh (only created if SSH key provided)
+  # Docker deployment will proceed once instances are created, SSH connection will be attempted during provisioner execution
+  depends_on = [
     openstack_compute_instance_v2.vault
   ]
 
