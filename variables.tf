@@ -39,7 +39,13 @@ variable "instance_image" {
 variable "network_name" {
   description = "OpenStack network name to attach instances to"
   type        = string
-  default     = "private"
+  default     = ""
+}
+
+variable "network_id" {
+  description = "OpenStack network ID to attach instances to (alternative to network_name)"
+  type        = string
+  default     = ""
 }
 
 variable "security_group_name" {
