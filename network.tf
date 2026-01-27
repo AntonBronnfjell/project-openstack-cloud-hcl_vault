@@ -48,12 +48,25 @@ resource "openstack_networking_secgroup_rule_v2" "vault_cluster" {
   description       = "Allow Vault cluster communication for HA"
 }
 
-# Data source for network
-# Use network_id if provided, otherwise lookup by name
+# Create network if it doesn't exist
+resource "openstack_networking_network_v2" "vault_network" {
+  count         = var.network_id == "" && var.network_name != "" ? 1 : 0
+  provider      = openstack
+  name          = var.network_name
+  admin_state_up = true
+}
+
+# Data source for network (use existing network by ID, or lookup by name, or use created network)
+locals {
+  network_id_to_use = var.network_id != "" ? var.network_id : (
+    var.network_name != "" && length(openstack_networking_network_v2.vault_network) > 0 ? openstack_networking_network_v2.vault_network[0].id : null
+  )
+}
+
 data "openstack_networking_network_v2" "vault_network" {
   provider   = openstack
-  network_id = var.network_id != "" ? var.network_id : null
-  name       = var.network_id == "" && var.network_name != "" ? var.network_name : null
+  network_id = local.network_id_to_use
+  name       = local.network_id_to_use == null && var.network_name != "" ? var.network_name : null
 }
 
 # Data source for subnet
