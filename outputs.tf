@@ -17,7 +17,6 @@ output "instances" {
       id        = instance.id
       name      = instance.name
       ip        = instance.network[0].fixed_ip_v4
-      status    = instance.status
       port      = var.vault_port
       health_url = "https://${instance.network[0].fixed_ip_v4}:${var.vault_port}/v1/sys/health"
     }

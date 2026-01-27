@@ -56,6 +56,19 @@ resource "openstack_networking_network_v2" "vault_network" {
   admin_state_up = true
 }
 
+# Create subnet for the network if it was created
+resource "openstack_networking_subnet_v2" "vault_subnet" {
+  count      = var.network_id == "" && var.network_name != "" ? 1 : 0
+  provider   = openstack
+  name       = "${var.network_name}-subnet"
+  network_id = openstack_networking_network_v2.vault_network[0].id
+  cidr       = "10.0.0.0/24"
+  ip_version = 4
+  enable_dhcp = true
+  
+  dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+}
+
 # Data source for network (use existing network by ID, or lookup by name, or use created network)
 locals {
   network_id_to_use = var.network_id != "" ? var.network_id : (
@@ -65,13 +78,18 @@ locals {
 
 data "openstack_networking_network_v2" "vault_network" {
   provider   = openstack
-  network_id = local.network_id_to_use
+  network_id = local.network_id_to_use != null ? local.network_id_to_use : null
   name       = local.network_id_to_use == null && var.network_name != "" ? var.network_name : null
 }
 
-# Data source for subnet
+# Data source for subnet (use created subnet or lookup existing one)
+locals {
+  subnet_id_to_use = var.network_id == "" && var.network_name != "" && length(openstack_networking_subnet_v2.vault_subnet) > 0 ? openstack_networking_subnet_v2.vault_subnet[0].id : null
+}
+
 data "openstack_networking_subnet_v2" "vault_subnet" {
-  provider  = openstack
-  network_id = data.openstack_networking_network_v2.vault_network.id
-  ip_version = 4
+  provider   = openstack
+  subnet_id  = local.subnet_id_to_use
+  network_id = local.subnet_id_to_use == null ? data.openstack_networking_network_v2.vault_network.id : null
+  ip_version  = 4
 }
