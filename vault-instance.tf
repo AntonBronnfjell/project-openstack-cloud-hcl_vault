@@ -43,7 +43,7 @@ resource "openstack_compute_instance_v2" "vault" {
   name        = "vault-${count.index + 1}"
   flavor_name = var.instance_flavor
   image_name  = var.instance_image
-  key_pair    = var.ssh_key_name
+  key_pair    = var.ssh_key_name != "" ? var.ssh_key_name : null
 
   network {
     uuid = data.openstack_networking_network_v2.vault_network.id
