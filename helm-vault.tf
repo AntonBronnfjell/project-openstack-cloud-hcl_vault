@@ -151,7 +151,7 @@ resource "kubernetes_job_v1" "vault_init" {
               echo "Vault initialized successfully"
               echo "Unseal keys and root token saved to /tmp/vault-init.json"
             EOT
-          }
+          ]
 
           env {
             name  = "VAULT_ADDR"
