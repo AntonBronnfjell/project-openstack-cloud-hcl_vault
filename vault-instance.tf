@@ -15,7 +15,7 @@ locals {
         shell: /bin/bash
         sudo: ['ALL=(ALL) NOPASSWD:ALL']
         ssh_authorized_keys:
-          - ${var.ssh_public_key != "" ? var.ssh_public_key : file("${pathexpand("~")}/.ssh/id_rsa.pub")}
+          - ${var.ssh_public_key != "" ? var.ssh_public_key : ""}
 
     package_update: true
     package_upgrade: true
