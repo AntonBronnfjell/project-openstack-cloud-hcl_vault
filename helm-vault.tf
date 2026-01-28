@@ -41,7 +41,7 @@ resource "kubernetes_secret" "vault_tls" {
 
   data = {
     "vault-cert.pem" = base64encode(file(var.tls_cert_path))
-    "vault-key.pem" = base64encode(file(var.tls_key_path))
+    "vault-key.pem"  = base64encode(file(var.tls_key_path))
   }
 
   type = "Opaque"
@@ -99,7 +99,7 @@ resource "kubernetes_pod_disruption_budget_v1" "vault" {
 # Kubernetes Job for Vault initialization (replaces shell script)
 resource "kubernetes_job_v1" "vault_init" {
   depends_on = [helm_release.vault]
-  count      = 1  # Only initialize once
+  count      = 1 # Only initialize once
 
   metadata {
     name      = "vault-init"
@@ -107,7 +107,7 @@ resource "kubernetes_job_v1" "vault_init" {
   }
 
   spec {
-    ttl_seconds_after_finished = 3600  # Clean up after 1 hour
+    ttl_seconds_after_finished = 3600 # Clean up after 1 hour
 
     template {
       metadata {
@@ -193,7 +193,7 @@ resource "kubernetes_job_v1" "vault_oidc_config" {
   }
 
   spec {
-    ttl_seconds_after_finished = 3600  # Clean up after 1 hour
+    ttl_seconds_after_finished = 3600 # Clean up after 1 hour
 
     template {
       metadata {
@@ -263,7 +263,7 @@ resource "kubernetes_job_v1" "vault_oidc_config" {
               
               echo "Azure AD OIDC configuration complete!"
             EOT
-          }
+          ]
 
           env {
             name  = "VAULT_ADDR"
