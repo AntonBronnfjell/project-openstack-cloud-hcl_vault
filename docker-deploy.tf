@@ -41,7 +41,7 @@ resource "null_resource" "vault_wait_for_ssh" {
 }
 
 # Deploy Docker Compose stack
-# This will proceed even if SSH wait fails (using on_failure = continue)
+# This will proceed even if SSH wait fails
 resource "null_resource" "vault_docker_deploy" {
   count = var.instance_count
 
@@ -49,7 +49,7 @@ resource "null_resource" "vault_docker_deploy" {
   # Note: We don't strictly depend on SSH wait to prevent blocking
   # Docker deployment will retry SSH connection itself
   depends_on = [
-    openstack_compute_instance_v2.vault[count.index]
+    openstack_compute_instance_v2.vault
   ]
 
   triggers = {
@@ -125,5 +125,4 @@ EOF
     create_before_destroy = true
     ignore_changes        = [triggers]
   }
-}
 }
