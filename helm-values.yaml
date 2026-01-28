@@ -1,0 +1,132 @@
+# Vault Helm Chart Values
+# Used for deploying Vault on Kubernetes
+
+global:
+  enabled: true
+  tlsDisable: false
+
+server:
+  # High availability configuration
+  replicas: 2
+  
+  # Update strategy for zero-downtime
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  
+  # Image configuration
+  image:
+    repository: hashicorp/vault
+    tag: "latest"
+  
+  # Service configuration
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 8200
+  
+  # Extra environment variables
+  extraEnvironmentVars:
+    VAULT_ADDR: "https://chisel.graphicsforge.net"
+    VAULT_API_ADDR: "https://chisel.graphicsforge.net"
+  
+  # Extra volumes for configuration
+  extraVolumes:
+    - type: secret
+      name: vault-tls
+  
+  # Extra volume mounts
+  extraVolumeMounts:
+    - name: vault-tls
+      mountPath: /vault/config/certs
+      readOnly: true
+  
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # Health checks
+  readinessProbe:
+    httpGet:
+      path: /v1/sys/health
+      port: 8200
+      scheme: HTTPS
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  livenessProbe:
+    httpGet:
+      path: /v1/sys/health
+      port: 8200
+      scheme: HTTPS
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  
+  # Storage configuration
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+  
+  # Audit storage
+  auditStorage:
+    enabled: false
+  
+  # Configuration for Vault
+  extraConfig: |
+    ui = true
+    default_lease_ttl = "168h"
+    max_lease_ttl = "720h"
+    
+    listener "tcp" {
+      address = "0.0.0.0:8200"
+      tls_disable = 0
+      tls_cert_file = "/vault/config/certs/vault-cert.pem"
+      tls_key_file = "/vault/config/certs/vault-key.pem"
+    }
+    
+    storage "file" {
+      path = "/vault/data"
+    }
+
+# Ingress configuration (if using Traefik)
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+  hosts:
+    - host: chisel.graphicsforge.net
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: vault-tls
+      hosts:
+        - chisel.graphicsforge.net
+
+# UI configuration
+ui:
+  enabled: true
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 8200

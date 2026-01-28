@@ -2,37 +2,66 @@
 # Vault Service - Compute Instance Definitions (HA)
 # ============================================================================
 
-# Cloud-init script for Docker installation and Vault setup
+# Cloud-init script for k3s worker node (Vault will run on Kubernetes)
 locals {
   cloud_init_script = <<-EOF
-    #!/bin/bash
-    set -e
-    
-    # Update system
-    apt-get update
-    apt-get install -y curl wget git
-    
-    # Install Docker
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
-    
-    # Install Docker Compose
-    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-    
-    # Create Vault directories
-    mkdir -p ${var.vault_data_path}
-    mkdir -p ${var.vault_config_path}/certs
-    
-    # Set permissions
-    chmod 755 ${var.vault_data_path}
-    chmod 755 ${var.vault_config_path}
-    
-    # Create systemd service for Vault (optional, for auto-start)
-    # Vault will be managed via Docker Compose instead
-    
-    # Log completion
-    echo "Vault instance initialization complete" > /var/log/vault-init.log
+    #cloud-config
+    # Vault Instance Cloud-init Configuration
+    # Instance will join k3s cluster as worker node
+
+    users:
+      - name: ${var.deploy_user}
+        groups: sudo
+        shell: /bin/bash
+        sudo: ['ALL=(ALL) NOPASSWD:ALL']
+        ssh_authorized_keys:
+          - ${var.ssh_public_key != "" ? var.ssh_public_key : file("${pathexpand("~")}/.ssh/id_rsa.pub")}
+
+    package_update: true
+    package_upgrade: true
+
+    packages:
+      - curl
+      - wget
+      - git
+      - vim
+      - net-tools
+
+    write_files:
+      - path: /etc/modules-load.d/k8s.conf
+        content: |
+          overlay
+          br_netfilter
+        owner: root:root
+        permissions: '0644'
+
+      - path: /etc/sysctl.d/k8s.conf
+        content: |
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.bridge.bridge-nf-call-iptables = 1
+          net.ipv4.ip_forward = 1
+        owner: root:root
+        permissions: '0644'
+
+    runcmd:
+      # Load kernel modules
+      - modprobe overlay
+      - modprobe br_netfilter
+      
+      # Apply sysctl settings
+      - sysctl --system
+      
+      # Note: k3s worker installation will be handled by the k3s cluster
+      # This instance will be joined to the cluster via the master node
+      # Vault will be deployed via Helm on the Kubernetes cluster
+      
+      # Create deployment user
+      - usermod -aG docker ${var.deploy_user} || true
+      
+      # Log completion
+      - echo "Vault instance (k3s worker) initialization complete" > /var/log/vault-init.log
+
+    final_message: "Vault instance is ready to join k3s cluster"
   EOF
 }
 
@@ -53,7 +82,12 @@ resource "openstack_compute_instance_v2" "vault" {
     openstack_networking_secgroup_v2.vault.name
   ]
 
-  user_data = base64encode(local.cloud_init_script)
+  user_data = base64encode(templatefile("${path.module}/templates/vault-worker-cloud-init.yaml", {
+    deploy_user = var.deploy_user
+    ssh_public_key = var.ssh_public_key != "" ? var.ssh_public_key : (fileexists("${pathexpand("~")}/.ssh/id_rsa.pub") ? file("${pathexpand("~")}/.ssh/id_rsa.pub") : "")
+    k3s_token = var.k3s_token != "" ? var.k3s_token : ""
+    k3s_master_ip = var.k3s_master_ip != "" ? var.k3s_master_ip : ""
+  }))
 
   # Lifecycle management for zero-downtime deployments
   lifecycle {
