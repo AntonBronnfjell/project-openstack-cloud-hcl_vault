@@ -51,8 +51,7 @@ resource "kubernetes_secret" "vault_tls" {
 resource "helm_release" "vault" {
   depends_on = [
     kubernetes_namespace.vault,
-    kubernetes_secret.vault_tls,
-    null_resource.k3s_master_ready
+    kubernetes_secret.vault_tls
   ]
 
   name       = "vault"
