@@ -75,7 +75,8 @@ resource "openstack_compute_instance_v2" "vault" {
   key_pair    = var.ssh_key_name != "" ? var.ssh_key_name : null
 
   network {
-    uuid = data.openstack_networking_network_v2.vault_network.id
+    uuid = local.vault_network_id != "" ? local.vault_network_id : ""
+    name = local.vault_network_id == "" ? (var.network_name != "" ? var.network_name : "k3s-network") : ""
   }
 
   security_groups = [
