@@ -75,8 +75,8 @@ resource "openstack_compute_instance_v2" "vault" {
   key_pair    = var.ssh_key_name != "" ? var.ssh_key_name : null
 
   network {
-    uuid = local.vault_network_id != "" ? local.vault_network_id : ""
-    name = local.vault_network_id == "" ? (var.network_name != "" ? var.network_name : "k3s-network") : ""
+    uuid = local.vault_network_id != "" ? local.vault_network_id : null
+    name = local.vault_network_id == "" ? (var.network_name != "" ? var.network_name : "k3s-network") : null
   }
 
   security_groups = [
@@ -84,16 +84,16 @@ resource "openstack_compute_instance_v2" "vault" {
   ]
 
   user_data = base64encode(templatefile("${path.module}/templates/vault-worker-cloud-init.yaml", {
-    deploy_user = var.deploy_user
+    deploy_user    = var.deploy_user
     ssh_public_key = var.ssh_public_key != "" ? var.ssh_public_key : (fileexists("${pathexpand("~")}/.ssh/id_rsa.pub") ? file("${pathexpand("~")}/.ssh/id_rsa.pub") : "")
-    k3s_token = var.k3s_token != "" ? var.k3s_token : ""
-    k3s_master_ip = var.k3s_master_ip != "" ? var.k3s_master_ip : ""
+    k3s_token      = var.k3s_token != "" ? var.k3s_token : ""
+    k3s_master_ip  = var.k3s_master_ip != "" ? var.k3s_master_ip : ""
   }))
 
   # Lifecycle management for zero-downtime deployments
   lifecycle {
     create_before_destroy = true
-    ignore_changes       = [user_data]
+    ignore_changes        = [user_data]
   }
 
   metadata = {

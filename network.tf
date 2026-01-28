@@ -50,22 +50,22 @@ resource "openstack_networking_secgroup_rule_v2" "vault_cluster" {
 
 # Create network if it doesn't exist
 resource "openstack_networking_network_v2" "vault_network" {
-  count         = var.network_id == "" && var.network_name != "" ? 1 : 0
-  provider      = openstack
-  name          = var.network_name
+  count          = var.network_id == "" && var.network_name != "" ? 1 : 0
+  provider       = openstack
+  name           = var.network_name
   admin_state_up = true
 }
 
 # Create subnet for the network if it was created
 resource "openstack_networking_subnet_v2" "vault_subnet" {
-  count      = var.network_id == "" && var.network_name != "" ? 1 : 0
-  provider   = openstack
-  name       = "${var.network_name}-subnet"
-  network_id = openstack_networking_network_v2.vault_network[0].id
-  cidr       = "10.0.0.0/24"
-  ip_version = 4
+  count       = var.network_id == "" && var.network_name != "" ? 1 : 0
+  provider    = openstack
+  name        = "${var.network_name}-subnet"
+  network_id  = openstack_networking_network_v2.vault_network[0].id
+  cidr        = "10.0.0.0/24"
+  ip_version  = 4
   enable_dhcp = true
-  
+
   dns_nameservers = ["8.8.8.8", "8.8.4.4"]
 }
 
@@ -74,12 +74,19 @@ locals {
   network_id_to_use = var.network_id != "" ? var.network_id : (
     var.network_name != "" && length(openstack_networking_network_v2.vault_network) > 0 ? openstack_networking_network_v2.vault_network[0].id : null
   )
+
+  # Final network ID to use - prefer network_id, then created network, then lookup by name
+  vault_network_id = var.network_id != "" ? var.network_id : (
+    var.network_name != "" && length(openstack_networking_network_v2.vault_network) > 0 ? openstack_networking_network_v2.vault_network[0].id : (
+      var.network_name != "" && length(data.openstack_networking_network_v2.vault_network) > 0 ? data.openstack_networking_network_v2.vault_network[0].id : ""
+    )
+  )
 }
 
 data "openstack_networking_network_v2" "vault_network" {
-  provider   = openstack
-  network_id = local.network_id_to_use != null ? local.network_id_to_use : null
-  name       = local.network_id_to_use == null && var.network_name != "" ? var.network_name : null
+  count    = var.network_id == "" && var.network_name != "" && length(openstack_networking_network_v2.vault_network) == 0 ? 1 : 0
+  provider = openstack
+  name     = var.network_name
 }
 
 # Data source for subnet (use created subnet or lookup existing one)
@@ -88,8 +95,8 @@ locals {
 }
 
 data "openstack_networking_subnet_v2" "vault_subnet" {
+  count      = local.subnet_id_to_use == null && length(data.openstack_networking_network_v2.vault_network) > 0 ? 1 : 0
   provider   = openstack
-  subnet_id  = local.subnet_id_to_use
-  network_id = local.subnet_id_to_use == null ? data.openstack_networking_network_v2.vault_network.id : null
-  ip_version  = 4
+  network_id = data.openstack_networking_network_v2.vault_network[0].id
+  ip_version = 4
 }
