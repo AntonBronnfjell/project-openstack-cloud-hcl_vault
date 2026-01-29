@@ -1,0 +1,16 @@
+# ============================================================================
+# S3-compatible backend config for Terraform remote state (OpenStack object store)
+# ============================================================================
+# Copy to backend.s3.hcl and fill from Vault (vault-secrets-fetch.sh in traefik
+# repo exports TF_BACKEND_*, AWS_*, S3_ENDPOINT). Then:
+#   eval $(../project-traefik-container-yaml_domain-reverse-proxy/scripts/vault-secrets-fetch.sh)
+#   terraform init -backend-config=backend.s3.hcl
+# Ensure backend.s3.hcl is in .gitignore.
+
+bucket                      = "terraform-state"
+key                         = "vault/terraform.tfstate"
+region                      = "us-east-1"
+endpoint                    = "https://object-store.example.com"
+skip_credentials_validation = true
+skip_metadata_api_check     = true
+force_path_style            = true

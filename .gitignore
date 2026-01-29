@@ -5,6 +5,8 @@
 *.tfstate.*
 *.tfvars
 !terraform.tfvars.example
+backend.s3.hcl
+backend.hcl
 
 # Sensitive files
 *.pem

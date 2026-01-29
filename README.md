@@ -69,6 +69,10 @@ module "vault" {
 }
 ```
 
+### Remote state (optional)
+
+To use OpenStack object storage for Terraform state: create the bucket via `project-openstack-cloud-bucket_terraform-state`, store credentials in Vault at `terraform-state/credentials/env-s3`, copy `backend.s3.example` to `backend.s3.hcl`, fill from Vault (e.g. run `vault-secrets-fetch.sh` from the traefik repo), and run `terraform init -backend-config=backend.s3.hcl`. See that repo’s docs/VAULT_SECRETS.md and QUICKSTART.
+
 ## Requirements
 
 - Terraform >= 1.0
