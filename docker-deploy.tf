@@ -21,7 +21,7 @@ resource "null_resource" "vault_wait_for_ssh" {
     type        = "ssh"
     host        = openstack_compute_instance_v2.vault[count.index].network[0].fixed_ip_v4
     user        = var.deploy_user
-    private_key = file(var.ssh_private_key_path)
+    private_key = file(pathexpand(var.ssh_private_key_path))
     timeout     = "1m"  # Short timeout - fail fast if SSH isn't ready
     agent       = false
   }
@@ -67,7 +67,7 @@ resource "null_resource" "vault_docker_deploy" {
     type        = "ssh"
     host        = openstack_compute_instance_v2.vault[count.index].network[0].fixed_ip_v4
     user        = var.deploy_user
-    private_key = var.ssh_private_key_path != "" ? file(var.ssh_private_key_path) : null
+    private_key = var.ssh_private_key_path != "" ? file(pathexpand(var.ssh_private_key_path)) : null
     timeout     = "3m"  # Reduced timeout to fail faster
     agent       = false
   }

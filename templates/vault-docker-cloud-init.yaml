@@ -1,0 +1,44 @@
+#cloud-config
+# Vault Instance Cloud-init Configuration
+# Instance will run Vault using Docker Compose
+
+users:
+  - name: ${deploy_user}
+    groups: sudo, docker
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - wget
+  - git
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+
+runcmd:
+  # Install Docker
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+  - systemctl enable docker
+  - systemctl start docker
+  - usermod -aG docker ${deploy_user}
+  
+  # Create Vault directories
+  - mkdir -p /opt/vault/data
+  - mkdir -p /opt/vault/config
+  - chown -R ${deploy_user}:${deploy_user} /opt/vault
+  
+  # Log completion
+  - echo "Vault instance (Docker) initialization complete" > /var/log/vault-init.log
+  - docker info
+
+final_message: "Vault instance is ready for Docker deployment"

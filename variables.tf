@@ -33,7 +33,7 @@ variable "instance_flavor" {
 variable "instance_image" {
   description = "OpenStack image ID or name for Vault instances (Ubuntu/Debian with cloud-init)"
   type        = string
-  default     = "ubuntu-22.04"
+  default     = "debian-12-generic-amd64"  # Use Debian image that exists in OpenStack
 }
 
 variable "network_name" {
@@ -163,28 +163,9 @@ variable "vault_oidc_bound_audiences" {
   default     = []
 }
 
-variable "vault_helm_version" {
-  description = "Vault Helm chart version"
-  type        = string
-  default     = "0.27.0"
-}
-
 variable "ssh_public_key" {
   description = "SSH public key content for instance access"
   type        = string
   default     = ""
   sensitive   = true
-}
-
-variable "k3s_token" {
-  description = "k3s cluster token for joining worker nodes"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "k3s_master_ip" {
-  description = "k3s master node IP address"
-  type        = string
-  default     = ""
 }

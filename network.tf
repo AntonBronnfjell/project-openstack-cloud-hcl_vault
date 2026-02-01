@@ -94,8 +94,9 @@ locals {
   subnet_id_to_use = var.network_id == "" && var.network_name != "" && length(openstack_networking_subnet_v2.vault_subnet) > 0 ? openstack_networking_subnet_v2.vault_subnet[0].id : null
 }
 
+# Subnet data source only when we look up network by name (same count as network data source)
 data "openstack_networking_subnet_v2" "vault_subnet" {
-  count      = local.subnet_id_to_use == null && length(data.openstack_networking_network_v2.vault_network) > 0 ? 1 : 0
+  count      = var.network_id == "" && var.network_name != "" && length(openstack_networking_network_v2.vault_network) == 0 ? 1 : 0
   provider   = openstack
   network_id = data.openstack_networking_network_v2.vault_network[0].id
   ip_version = 4

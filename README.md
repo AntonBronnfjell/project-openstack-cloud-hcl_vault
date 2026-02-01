@@ -9,10 +9,11 @@ This module creates multiple Vault instances on OpenStack for zero-downtime depl
 ## Features
 
 - **High Availability**: Deploys multiple Vault instances (default: 2) for zero-downtime
-- **Docker-based**: Uses Docker Compose for container management
+- **Docker-based**: Uses Docker Compose for container management (Kubernetes removed)
 - **TLS Support**: Configurable TLS certificates for secure communication
 - **Auto-discovery**: Outputs service definitions for root repository consumption
 - **Health Checks**: Built-in health check endpoints for load balancing
+- **Azure AD OIDC**: Integrated Azure AD authentication support
 
 ## Usage
 

@@ -7,6 +7,10 @@
 terraform {
   required_version = ">= 1.0"
 
+  # Backend: s3 (OpenStack Swift S3-compatible bucket). Config via -backend-config=backend.s3.hcl
+  # See backend.s3.hcl for configuration details.
+  backend "s3" {}
+
   required_providers {
     openstack = {
       source                = "terraform-provider-openstack/openstack"
